@@ -1,0 +1,225 @@
+'use client';
+
+import Link from 'next/link';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Form,
+  FormField,
+  FormControl,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { createUser, getRegisterCaptcha } from '@/services/userService';
+import { useToast } from '@/hooks/use-toast';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { motion } from 'framer-motion';
+
+const formSchema = z.object({
+  username: z
+    .string()
+    .min(6, {
+      message: '用户名长度为6-20位',
+    })
+    .regex(/^[a-zA-Z0-9_-]+$/, {
+      message: '用户名只能包含字母、数字',
+    })
+    .max(20),
+  email: z.string().email({
+    message: '邮箱格式不正确',
+  }),
+  password: z
+    .string()
+    .min(6, {
+      message: '密码长度为6-20位',
+    })
+    .max(20),
+  code: z.string().length(6, {
+    message: '验证码长度为6位',
+  }),
+});
+
+export function RegistryForm() {
+  const { toast } = useToast();
+
+  const [countdown, setCountdown] = useState(0);
+  const [isDisabled, setIsDisabled] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      username: '',
+      email: '',
+      password: '',
+      code: '',
+    },
+    mode: 'onChange',
+  });
+
+  const email = form.watch('email'); // 监听 email 字段的变化
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Do something with the form values.
+    // ✅ This will be type-safe and validated.
+    console.log(values);
+    const {} = await createUser(values);
+  }
+
+  const sendRegisterCaptcha = async () => {
+    if (!email) {
+      toast({
+        title: '邮箱不能为空',
+        description: '请输入邮箱地址',
+      });
+      return;
+    }
+    // 启动倒计时
+    setCountdown(60);
+    setIsDisabled(true);
+
+    const intervalId = setInterval(() => {
+      setCountdown((prevCountdown: number) => {
+        if (prevCountdown > 0) {
+          return prevCountdown - 1;
+        } else {
+          clearInterval(intervalId);
+          setIsDisabled(false);
+          return 0;
+        }
+      });
+    }, 1000);
+
+    const result = await getRegisterCaptcha(email);
+    console.log(result);
+
+    if (result) {
+      toast({
+        title: '发送成功',
+        description: '验证码已发送至您的邮箱，请查收',
+      });
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <Card className="mx-auto min-w-96 md:min-w-[480px] backdrop-blur-lg">
+        <CardHeader className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
+          <CardTitle className="text-2xl">轻记AI GPT Chat</CardTitle>
+          <CardDescription>在下面输入您的信息注册账号</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="grid gap-4">
+                <FormField
+                  name="username"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>用户名</FormLabel>
+                      <FormControl>
+                        <Input id="username" type="text" required {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="password"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>密码</FormLabel>
+                      <FormControl>
+                        <Input
+                          id="password"
+                          type="password"
+                          required
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="email"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>邮箱</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="email"
+                            placeholder="m@example.com"
+                            {...field}
+                          />
+                          <Button
+                            type="button"
+                            onClick={sendRegisterCaptcha}
+                            disabled={!Boolean(email) || isDisabled}
+                          >
+                            {countdown > 0
+                              ? `${countdown}秒后重新发送`
+                              : '发送验证码'}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="code"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>邮箱验证码</FormLabel>
+                      <FormControl>
+                        <Input
+                          id="code"
+                          type="text"
+                          placeholder="邮箱验证码"
+                          required
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full">
+                  注册
+                </Button>
+              </div>
+            </form>
+          </Form>
+          <div className="mt-4 text-center text-sm">
+            已有账户？{' '}
+            <Link href="/login" className="underline">
+              登录
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
