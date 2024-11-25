@@ -1,11 +1,12 @@
-import { useUser } from '@/contexts/UserContext';
-import { getCurrentUser } from '@/services/userService';
-import { redirect } from 'next/navigation';
-import ChatGPT from './chat-gpt';
-export default async function Page() {
-  // if (!result) {
-  //   redirect('/login');
-  // }
+import { EmptyState } from "./empty-state";
+import AuthCheck from "./auth-check";
 
-  return <div className="flex-1"></div>;
+export default async function Page() {
+  return (
+    <AuthCheck>
+      <div className="flex-1">
+        <EmptyState />
+      </div>
+    </AuthCheck>
+  );
 }

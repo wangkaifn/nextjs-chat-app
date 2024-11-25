@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
+import Link from "next/link";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Form,
   FormField,
@@ -18,70 +18,48 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { useToast } from '@/hooks/use-toast';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { motion } from 'framer-motion';
-import { login } from '@/services/userService';
-import { redirect } from 'next/navigation';
-import { useUser } from '@/contexts/UserContext';
+} from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { motion } from "framer-motion";
+import { login } from "@/services/userService";
+import { redirect, useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthProvider";
 
 const formSchema = z.object({
   username: z
     .string()
     .min(6, {
-      message: '用户名长度为6-20位',
+      message: "用户名长度为6-20位",
     })
     .regex(/^[a-zA-Z0-9_-]+$/, {
-      message: '用户名只能包含字母、数字',
+      message: "用户名只能包含字母、数字",
     })
     .max(20),
   password: z
     .string()
     .min(6, {
-      message: '密码长度为6-20位',
+      message: "密码长度为6-20位",
     })
     .max(20),
 });
 
 export function LoginForm() {
   const { toast } = useToast();
-  const { setUser } = useUser();
+  const { login } = useAuth();
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: '',
-      password: '',
+      username: "",
+      password: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    try {
-      const data = await login(values);
-      console.log(data);
-
-      if (data.success) {
-        toast({
-          title: '登录成功',
-          description: '欢迎回来',
-        });
-        setUser(data.data?.userInfo);
-        // redirect('/chat');
-      }
-    } catch (error: {
-      message: string;
-      code: number;
-    }) {
-      console.log(error);
-
-      toast({
-        title: '登录失败',
-        description: error?.message,
-        variant: 'destructive',
-      });
-    }
+    await login(values);
   }
 
   return (
@@ -138,7 +116,7 @@ export function LoginForm() {
             </form>
           </Form>
           <div className="mt-4 text-center text-sm">
-            没有账户？{' '}
+            没有账户？{" "}
             <Link href="/registry" className="underline">
               注册
             </Link>

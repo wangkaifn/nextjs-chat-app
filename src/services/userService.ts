@@ -1,6 +1,6 @@
-'use client';
-import apiClient, { ApiResponse } from '@/lib/apiClient';
-import Cookies from 'js-cookie';
+"use client";
+import apiClient, { ApiResponse } from "@/lib/apiClient";
+import Cookies from "js-cookie";
 export interface User {
   id: string;
   email: string;
@@ -65,22 +65,20 @@ export const getRegisterCaptcha = async (email: string) => {
 export const createUser = async (
   data: CreateUserDto
 ): Promise<ApiResponse<User>> => {
-  const response = await apiClient.post<User>('/users/registry', data);
+  const response = await apiClient.post<User>("/users/registry", data);
 
   return response.data;
 };
 
 export const login = async (data: LoginDto): Promise<ApiResponse<LoginVo>> => {
-  const response = await apiClient.post<LoginVo>('/users/login', data);
-  console.log(response.data.data);
+  const response = await apiClient.post<LoginVo>("/users/login", data);
 
   if (response.data.data && response.data.success) {
-    Cookies.set('accessToken', response.data.data.access_token, { expires: 1 });
-    Cookies.set('refreshToken', response.data.data.refresh_token, {
+    Cookies.set("accessToken", response.data.data.access_token, { expires: 1 });
+    Cookies.set("refreshToken", response.data.data.refresh_token, {
       expires: 7,
     });
   }
-
   return response.data;
 };
 
@@ -93,14 +91,14 @@ export const getCurrentUser = async (): Promise<
   ApiResponse<boolean> | boolean
 > => {
   // if (typeof window === 'undefined') return false;
-  const userInfoStr = localStorage?.getItem('userInfo');
+  const userInfoStr = localStorage?.getItem("userInfo");
   if (!userInfoStr) {
     return false;
   }
   const userInfo = JSON.parse(userInfoStr);
 
   const response = await apiClient.get<ApiResponse<boolean>>(
-    '/users/currentUser',
+    "/users/currentUser",
     {
       id: userInfo.id,
     }

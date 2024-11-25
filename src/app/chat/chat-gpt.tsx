@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { ChatMessage, ProChat } from "@ant-design/pro-chat";
+import { ProChat } from "@ant-design/pro-chat";
 import { useTheme } from "antd-style";
-import { useUser } from "@/contexts/UserContext";
+import { useAuth } from "@/contexts/AuthProvider";
 import {
   createMessage,
   getMessageListByConversationId,
@@ -15,11 +15,8 @@ export default function ChatGPT({
   conversationId: string;
 }) {
   const theme = useTheme();
-  const { user } = useUser();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-
-  // const [chats, setChats] = useState<ChatMessage<Record<string, any>>[]>([]);
-
   // 会话消息列表  new set 缓存
   const [conversationMessageList, setConversationMessageList] = useState<
     Map<string, Message[]>
@@ -38,8 +35,6 @@ export default function ChatGPT({
       setLoading(false);
     }
   };
-  console.log(conversationMessageList, "conversationMessageList");
-
   useEffect(() => {
     if (conversationId) {
       getConversationMessageList(conversationId);
@@ -71,14 +66,17 @@ export default function ChatGPT({
           title: user?.nickname || user?.username,
         }}
         helloMessage={"欢迎使用 轻记AI"}
+        inputAreaProps={{
+          style: {
+            zIndex: 10,
+          },
+        }}
         request={async (messages) => {
           const { data } = await createMessage({
             conversationId: conversationId,
             content: messages[messages.length - 1].content as string,
             userId: user?.id as string,
           });
-          console.log(data);
-
           return new Response(data?.assistantMessage?.content);
         }}
       />

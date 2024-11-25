@@ -1,9 +1,9 @@
-import apiClient, { ApiResponse } from '@/lib/apiClient';
+import apiClient, { ApiResponse } from "@/lib/apiClient";
 export type Conversation = {
   id: string;
   title: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
   userId: string;
 };
 
@@ -30,7 +30,18 @@ export const createConversation = async (
   data: CreateConversationDto
 ): Promise<ApiResponse<Conversation>> => {
   const conversation = await apiClient.post<Conversation>(
-    '/conversations',
+    "/conversations",
+    data
+  );
+  return conversation.data;
+};
+
+// 修改会话
+export const updateConversation = async (
+  data: Conversation
+): Promise<ApiResponse<Partial<Conversation>>> => {
+  const conversation = await apiClient.put<Partial<Conversation>>(
+    `/conversations/${data.id}`,
     data
   );
   return conversation.data;

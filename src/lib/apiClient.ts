@@ -1,6 +1,7 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import Cookies from 'js-cookie';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
+import { message } from "antd";
 export type ApiResponse<T> = {
   code: number;
   data: T;
@@ -15,14 +16,14 @@ class ApiClient {
     this.instance = axios.create({
       baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
     // 请求拦截器，添加 Access Token
     this.instance.interceptors.request.use(
       (config) => {
-        const token = Cookies.get('accessToken');
+        const token = localStorage.getItem("accessToken");
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -37,46 +38,52 @@ class ApiClient {
       async (error) => {
         const originalRequest = error.config;
 
-        // if (error.response.status === 401 && !originalRequest._retry) {
-        //   console.log('token过期');
+        if (error.response.status === 401 && !originalRequest._retry) {
+          console.log("token过期");
 
-        //   originalRequest._retry = true;
-        //   const refresh_token = Cookies.get('refreshToken');
-        //   if (refresh_token) {
-        //     try {
-        //       const response = await axios.post(
-        //         `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/refresh-tokens`,
-        //         { refresh_token }
-        //       );
+          originalRequest._retry = true;
+          const refresh_token = localStorage.getItem("refreshToken");
 
-        //       const { accessToken, newRefreshToken } = response.data;
-        //       Cookies.set('accessToken', accessToken);
-        //       if (newRefreshToken) {
-        //         Cookies.set('refreshToken', newRefreshToken);
-        //       }
-        //       originalRequest.headers[
-        //         'Authorization'
-        //       ] = `Bearer ${accessToken}`;
-        //       return axios(originalRequest);
-        //     } catch (refreshError) {
-        //       console.log(refreshError);
+          if (refresh_token) {
+            try {
+              const response = await axios.post(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/refresh-tokens`,
+                { refresh_token }
+              );
+              const {
+                access_token: accessToken,
+                refresh_token: newRefreshToken,
+              } = response.data?.data;
 
-        //       // 刷新 token 失败，重定向到登录页面
-        //       if (window.location.pathname !== '/login') {
-        //         window.location.href = '/login';
-        //       }
-        //       return Promise.reject(refreshError);
-        //     }
-        //   } else {
-        //     // 没有 Refresh Token，重定向到登录页面
-        //     if (window.location.pathname !== '/login') {
-        //       window.location.href = '/login';
-        //     }
+              localStorage.setItem("accessToken", accessToken);
+              if (newRefreshToken) {
+                localStorage.setItem("refreshToken", newRefreshToken);
+              }
+              originalRequest.headers[
+                "Authorization"
+              ] = `Bearer ${accessToken}`;
+              return axios(originalRequest);
+            } catch (refreshError) {
+              console.log(refreshError);
 
-        //     return Promise.reject(error.response.data);
-        //   }
-        // }
+              // 刷新 token 失败，重定向到登录页面
+              if (window.location.pathname !== "/login") {
+                window.location.href = "/login";
+              }
+              return Promise.reject(refreshError);
+            }
+          } else {
+            // 没有 Refresh Token，重定向到登录页面
+            if (window.location.pathname !== "/login") {
+              window.location.href = "/login";
+            }
 
+            return Promise.reject(error.response.data);
+          }
+        }
+
+        console.log(error.response.data);
+        message.warning(error.response.data.message);
         return Promise.reject(error.response.data);
       }
     );

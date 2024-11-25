@@ -28,51 +28,60 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { useUser } from "@/contexts/UserContext";
+import { useAuth } from "@/contexts/AuthProvider";
 import { useEffect, useState } from "react";
 
 import * as conversationService from "@/services/conversationService";
 import { Conversation } from "@/services/conversationService";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter, useParams } from "next/navigation";
 import {
-  getMessageListByConversationId,
-  Message,
-} from "@/services/messageService";
-import { useRouter } from "next/navigation";
-import { ConversationFrom } from "@/app/chat/components/conversayion-from";
+  ConversationFrom,
+  FormType,
+} from "@/app/chat/components/conversayion-from";
+import { SkeletonSidebarLoading } from "./skeleton-sidebar-loading";
 
 // This is sample data.
 const data = {
-  versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"],
+  versions: ["gpt-4o-mini"],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isMobile } = useSidebar();
-  const { user } = useUser();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const { id } = useParams();
   // 当前选择会话
-  const [isActiveConversation, setIsActiveConversation] = useState("");
+  const [isActiveConversation, setIsActiveConversation] = useState(id || "");
   // 会话列表
   const [conversationList, setConversationList] = useState<Conversation[]>([]);
-
+  const [conversationListLoading, setConversationListLoading] = useState(false);
+  const [currentConversationDetail, setCurrentConversationDetail] =
+    useState<Conversation>();
   const [openConversationFrom, setOpenConversationFrom] = useState(false);
-  const [formType, setFormType] = useState<string>("");
+  const [formType, setFormType] = useState<FormType>();
 
   useEffect(() => {
     if (user && user.id) {
-      console.log(user.id);
-
       getConversationList(user.id);
+      setIsActiveConversation(id || "");
     }
-  }, [user]);
+  }, [user, id]);
 
   const getConversationList = async (id: string) => {
-    const data = await conversationService.getConversationList(id);
-    setConversationList(data.data);
-    if (data.data?.[0]?.id) {
-      router.push(`/chat/${data.data?.[0]?.id}`);
-      setIsActiveConversation(data.data?.[0]?.id);
+    setConversationListLoading(true);
+
+    try {
+      const data = await conversationService.getConversationList(id);
+      setConversationList(data.data);
+      if (data.data?.length === 0) {
+        router.push(`/chat`);
+      }
+      setConversationListLoading(false);
+    } catch (error) {
+      console.error(error);
+      setConversationListLoading(false);
     }
   };
 
@@ -87,14 +96,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <Button
             variant="outline"
             onClick={async () => {
-              if (!user) return;
-              const {} = await conversationService.createConversation({
-                title: "新会话",
-                userId: user.id,
-                isPinned: false,
-              });
+              // if (!user) return;
+              // const {} = await conversationService.createConversation({
+              //   title: "新会话",
+              //   userId: user.id,
+              //   isPinned: false,
+              // });
 
-              getConversationList(user.id);
+              // getConversationList(user.id);
               setFormType("add");
               setOpenConversationFrom(true);
             }}
@@ -107,74 +116,83 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarContent>
           <SidebarGroup key="conversationList">
             <SidebarGroupLabel>会话列表</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {conversationList?.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      asChild
-                      onClick={() => {
-                        setIsActiveConversation(item.id);
-                        // getConversationMessageList(item.id);
-                        router.push(`/chat/${item.id}`);
-                      }}
-                      isActive={isActiveConversation === item.id}
-                    >
-                      <a>{item.title}</a>
-                    </SidebarMenuButton>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <SidebarMenuAction
-                          showOnHover
-                          className="flex items-center text-xs"
-                        >
-                          <MoreHorizontal />
-                          <span className="sr-only">More</span>
-                        </SidebarMenuAction>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        className="w-24 rounded-lg"
-                        side={isMobile ? "bottom" : "right"}
-                        align={isMobile ? "end" : "start"}
-                      >
-                        <DropdownMenuItem>
-                          <ArrowUp className="text-muted-foreground" />
-                          <span>置顶</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
+            {conversationListLoading ? (
+              <SkeletonSidebarLoading />
+            ) : (
+              <>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {conversationList?.map((item) => (
+                      <SidebarMenuItem key={item.id}>
+                        <SidebarMenuButton
+                          asChild
                           onClick={() => {
-                            setFormType("edit");
-                            setOpenConversationFrom(true);
+                            setIsActiveConversation(item.id);
+                            // getConversationMessageList(item.id);
+                            router.push(`/chat/${item.id}`);
                           }}
+                          isActive={isActiveConversation === item.id}
                         >
-                          <Edit className="text-muted-foreground" />
-                          <span>编辑</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            conversationService
-                              .deleteConversation(item.id)
-                              .then(() => {
-                                toast({
-                                  variant: "destructive",
-                                  title: "删除成功",
-                                  description: "删除成功",
-                                });
-                                user && getConversationList(user.id);
-                              });
-                          }}
-                          draggable
-                        >
-                          <Trash2 className="text-muted-foreground" />
-                          <span>删除</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
+                          <a>{item.title}</a>
+                        </SidebarMenuButton>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <SidebarMenuAction
+                              showOnHover
+                              className="flex items-center text-xs"
+                            >
+                              <MoreHorizontal />
+                              <span className="sr-only">More</span>
+                            </SidebarMenuAction>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            className="w-24 rounded-lg"
+                            side={isMobile ? "bottom" : "right"}
+                            align={isMobile ? "end" : "start"}
+                          >
+                            <DropdownMenuItem disabled>
+                              <ArrowUp className="text-muted-foreground" />
+                              <span>置顶</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setFormType("edit");
+                                setOpenConversationFrom(true);
+                                setCurrentConversationDetail(item);
+                              }}
+                            >
+                              <Edit className="text-muted-foreground" />
+                              <span>编辑</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => {
+                                conversationService
+                                  .deleteConversation(item.id)
+                                  .then(() => {
+                                    toast({
+                                      variant: "destructive",
+                                      title: "删除成功",
+                                      description: "删除成功",
+                                      duration: 3000,
+                                    });
+                                    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                                    user && getConversationList(user.id);
+                                  });
+                              }}
+                              draggable
+                            >
+                              <Trash2 className="text-muted-foreground" />
+                              <span>删除</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </>
+            )}
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
@@ -184,6 +202,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               email: user?.email || "",
               avatar: "https://ui.shadcn.com/avatars/shadcn.jpg",
             }}
+            logout={logout}
           />
         </SidebarFooter>
         <SidebarRail />
@@ -191,7 +210,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <ConversationFrom
         open={openConversationFrom}
         setOpen={setOpenConversationFrom}
-        conversationId={isActiveConversation}
+        setConversationList={setConversationList}
+        currentConversationDetail={currentConversationDetail}
+        setIsActiveConversation={setIsActiveConversation}
+        formType={formType}
+        userId={user?.id}
       />
     </>
   );

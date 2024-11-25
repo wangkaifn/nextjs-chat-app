@@ -1,18 +1,17 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useState } from 'react';
+import Link from "next/link";
+import { useState } from "react";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Form,
   FormField,
@@ -20,40 +19,41 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { createUser, getRegisterCaptcha } from '@/services/userService';
-import { useToast } from '@/hooks/use-toast';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { motion } from 'framer-motion';
-
+} from "@/components/ui/form";
+import { createUser, getRegisterCaptcha } from "@/services/userService";
+import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 const formSchema = z.object({
   username: z
     .string()
     .min(6, {
-      message: '用户名长度为6-20位',
+      message: "用户名长度为6-20位",
     })
     .regex(/^[a-zA-Z0-9_-]+$/, {
-      message: '用户名只能包含字母、数字',
+      message: "用户名只能包含字母、数字",
     })
     .max(20),
   email: z.string().email({
-    message: '邮箱格式不正确',
+    message: "邮箱格式不正确",
   }),
   password: z
     .string()
     .min(6, {
-      message: '密码长度为6-20位',
+      message: "密码长度为6-20位",
     })
     .max(20),
   code: z.string().length(6, {
-    message: '验证码长度为6位',
+    message: "验证码长度为6位",
   }),
 });
 
 export function RegistryForm() {
   const { toast } = useToast();
+  const router = useRouter();
 
   const [countdown, setCountdown] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
@@ -61,28 +61,33 @@ export function RegistryForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: '',
-      email: '',
-      password: '',
-      code: '',
+      username: "",
+      email: "",
+      password: "",
+      code: "",
     },
-    mode: 'onChange',
+    mode: "onChange",
   });
 
-  const email = form.watch('email'); // 监听 email 字段的变化
+  const email = form.watch("email"); // 监听 email 字段的变化
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
-    const {} = await createUser(values);
+    const { success } = await createUser(values);
+    if (success) {
+      toast({
+        title: "注册成功",
+        description: "请登录",
+        variant: "default",
+      });
+      router.push("/login");
+    }
   }
 
   const sendRegisterCaptcha = async () => {
     if (!email) {
       toast({
-        title: '邮箱不能为空',
-        description: '请输入邮箱地址',
+        title: "邮箱不能为空",
+        description: "请输入邮箱地址",
       });
       return;
     }
@@ -107,8 +112,8 @@ export function RegistryForm() {
 
     if (result) {
       toast({
-        title: '发送成功',
-        description: '验证码已发送至您的邮箱，请查收',
+        title: "发送成功",
+        description: "验证码已发送至您的邮箱，请查收",
       });
     }
   };
@@ -179,7 +184,7 @@ export function RegistryForm() {
                           >
                             {countdown > 0
                               ? `${countdown}秒后重新发送`
-                              : '发送验证码'}
+                              : "发送验证码"}
                           </Button>
                         </div>
                       </FormControl>
@@ -213,7 +218,7 @@ export function RegistryForm() {
             </form>
           </Form>
           <div className="mt-4 text-center text-sm">
-            已有账户？{' '}
+            已有账户？{" "}
             <Link href="/login" className="underline">
               登录
             </Link>
