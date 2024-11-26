@@ -73,7 +73,7 @@ export function ConversationFrom({
     if (!currentConversationDetail && !userId) return;
     if (formType === "edit") {
       updateConversation({
-        id: currentConversationDetail?.id,
+        id: currentConversationDetail?.id as string,
         title: values.title,
         userId,
       })
@@ -83,9 +83,11 @@ export function ConversationFrom({
             description: res?.message,
             duration: 3000,
           });
-          getConversationList(currentConversationDetail?.userId).then((res) => {
-            setConversationList(res?.data);
-          });
+          getConversationList(currentConversationDetail?.userId as string).then(
+            (res) => {
+              setConversationList(res?.data);
+            }
+          );
         })
         .catch((err) => {
           toast({

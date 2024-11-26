@@ -14,7 +14,7 @@ export type Conversation = {
 export const getConversationList = async (
   userId: string
 ): Promise<ApiResponse<Conversation[]>> => {
-  const conversationList = await apiClient.get<Conversation[]>(
+  const conversationList = await apiClient.get<ApiResponse<Conversation[]>>(
     `/conversations/${userId}`
   );
   return conversationList.data;

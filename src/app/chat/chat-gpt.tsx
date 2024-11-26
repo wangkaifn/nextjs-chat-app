@@ -58,7 +58,10 @@ export default function ChatGPT({
         }}
         loading={loading}
         chats={chats?.map((item) => ({
-          ...item,
+          id: item.id,
+          createAt: item.createdAt as unknown as number,
+          updateAt: item.updatedAt as unknown as number,
+          content: item.content,
           role: item.role === "USER" ? "user" : "assistant",
         }))}
         userMeta={{

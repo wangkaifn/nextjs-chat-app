@@ -214,7 +214,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         currentConversationDetail={currentConversationDetail}
         setIsActiveConversation={setIsActiveConversation}
         formType={formType}
-        userId={user?.id}
+        userId={user?.id as string}
       />
     </>
   );
