@@ -1,9 +1,9 @@
 "use client";
-import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthProvider";
 import { redirect } from "next/navigation";
-
+import "./styles.css";
+import { AppSidebar } from "@/components/sidebar";
 export default function ChatLayout({
   children,
 }: Readonly<{

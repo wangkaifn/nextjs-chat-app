@@ -40,8 +40,13 @@ type CreateMessageDto = Omit<
 >;
 // 创建消息
 export const createMessage = async (
-  data: CreateMessageDto
+  data: CreateMessageDto,
+  model: string
 ): Promise<ApiResponse<Message>> => {
-  const message = await apiClient.post<Message>("/messages/create", data);
+  const message = await apiClient.post<Message>("/messages/create", data, {
+    params: {
+      model,
+    },
+  });
   return message.data;
 };

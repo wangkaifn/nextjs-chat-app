@@ -22,7 +22,7 @@ export const getConversationList = async (
 
 type CreateConversationDto = {
   title: string;
-  isPinned: boolean;
+  isPinned?: boolean;
   userId: string;
 };
 // 创建会话

@@ -14,15 +14,28 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { getGptModelList, GptModelList } from "@/services/gptService";
+import { message } from "antd";
 
 export function VersionSwitcher({
-  versions,
-  defaultVersion,
+  selectedGptModule,
+  setSelectedGptModule,
 }: {
-  versions: string[];
-  defaultVersion: string;
+  selectedGptModule: string;
+  setSelectedGptModule: (value: string) => void;
 }) {
-  const [selectedVersion, setSelectedVersion] = React.useState(defaultVersion);
+  const [gptModuleList, setGptModuleList] = React.useState<GptModelList[]>([]);
+  React.useLayoutEffect(() => {
+    getGptModelList()
+      .then((res) => {
+        if (res.data && res.success) {
+          setGptModuleList(res.data);
+        }
+      })
+      .catch((err) => {
+        message.error(err?.message);
+      });
+  }, []);
 
   return (
     <SidebarMenu>
@@ -36,24 +49,29 @@ export function VersionSwitcher({
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                 <GalleryVerticalEnd className="size-4" />
               </div>
-              <div className="flex flex-col gap-0.5 leading-none">
+              <div className="flex flex-col gap-0.5 leading-none line-clamp-1">
                 <span className="font-semibold">GPT模型</span>
-                <span className="">{selectedVersion}</span>
+                <span className="line-clamp-1">{selectedGptModule}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width]"
+            className="w-[--radix-dropdown-menu-trigger-width] h-56 overflow-y-auto"
             align="start"
           >
-            {versions.map((version) => (
+            {gptModuleList.map((gptModule) => (
               <DropdownMenuItem
-                key={version}
-                onSelect={() => setSelectedVersion(version)}
+                key={gptModule.id}
+                onSelect={() => {
+                  setSelectedGptModule(gptModule.name);
+                  localStorage.setItem("defaultGptModule", gptModule.name);
+                }}
               >
-                {version}{" "}
-                {version === selectedVersion && <Check className="ml-auto" />}
+                {gptModule.name}
+                {gptModule.name === selectedGptModule && (
+                  <Check className="ml-auto" />
+                )}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

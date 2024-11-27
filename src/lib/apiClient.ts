@@ -2,6 +2,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
 import { message } from "antd";
+import { AUTH_STORAGE_KEYS } from "@/contexts/constants";
 export type ApiResponse<T> = {
   code: number;
   data: T;
@@ -42,13 +43,16 @@ class ApiClient {
           console.log("token过期");
 
           originalRequest._retry = true;
-          const refresh_token = localStorage.getItem("refreshToken");
 
-          if (refresh_token) {
+          const refreshToken = localStorage.getItem(
+            AUTH_STORAGE_KEYS.REFRESH_TOKEN
+          );
+
+          if (refreshToken) {
             try {
               const response = await axios.post(
                 `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/refresh-tokens`,
-                { refresh_token }
+                { refreshToken }
               );
               const {
                 access_token: accessToken,
@@ -56,8 +60,14 @@ class ApiClient {
               } = response.data?.data;
 
               localStorage.setItem("accessToken", accessToken);
+              localStorage.setItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+
               if (newRefreshToken) {
                 localStorage.setItem("refreshToken", newRefreshToken);
+                localStorage.setItem(
+                  AUTH_STORAGE_KEYS.REFRESH_TOKEN,
+                  newRefreshToken
+                );
               }
               originalRequest.headers[
                 "Authorization"
