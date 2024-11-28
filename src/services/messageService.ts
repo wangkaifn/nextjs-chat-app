@@ -1,6 +1,11 @@
-import apiClient, { ApiResponse } from '@/lib/apiClient';
+import { ApiResponse } from "@/lib/api/types";
+import apiClient from "@/lib/apiClient";
 
 export interface Message {
+  role: string;
+  assistantMessage?: {
+    content: string;
+  };
   id: string;
   content: string;
   createdAt: string;
@@ -13,11 +18,14 @@ export interface Message {
 export const getMessageListByConversationId = async (
   conversationId: string
 ): Promise<ApiResponse<Message[]>> => {
-  const messageList = await apiClient.get<Message[]>(`/messages/history`, {
-    params: {
-      conversationId,
-    },
-  });
+  const messageList = await apiClient.get<ApiResponse<Message[]>>(
+    `/messages/history`,
+    {
+      params: {
+        conversationId,
+      },
+    }
+  );
   return messageList.data;
 };
 
@@ -27,11 +35,34 @@ export const getMessageListByConversationId = async (
 //     "content":"nestjs讲解"
 // }
 
-type CreateMessageDto = Omit<Message, 'id' | 'createdAt' | 'updatedAt'>;
+type CreateMessageDto = Omit<
+  Message,
+  "id" | "createdAt" | "updatedAt" | "role"
+>;
 // 创建消息
 export const createMessage = async (
-  data: CreateMessageDto
+  data: CreateMessageDto,
+  model: string
 ): Promise<ApiResponse<Message>> => {
-  const message = await apiClient.post<Message>('/messages/create', data);
+  const message = await apiClient.post<Message>("/messages/create", data, {
+    params: {
+      model,
+    },
+  });
+  return message.data;
+};
+
+// 删除当前会话内的消息
+export const deleteMessageByConversationId = async (
+  conversationId: string
+): Promise<ApiResponse<boolean>> => {
+  const message = await apiClient.delete<boolean>(
+    `/messages/deleteMessageByConversationId`,
+    {
+      data: {
+        conversationId,
+      },
+    }
+  );
   return message.data;
 };

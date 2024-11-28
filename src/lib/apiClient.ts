@@ -1,18 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { ApiResponse } from "./api/types";
+import { AuthInterceptor } from "./api/auth-interceptor";
 
-import { message } from "antd";
-export type ApiResponse<T> = {
-  code: number;
-  data: T;
-  message: string;
-  success: boolean;
-};
-
+/**
+ * API 客户端类
+ * 处理所有 HTTP 请求
+ */
 class ApiClient {
   private instance: AxiosInstance;
 
   constructor() {
+    // 创建 axios 实例
     this.instance = axios.create({
       baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
       headers: {
@@ -20,75 +18,13 @@ class ApiClient {
       },
     });
 
-    // 请求拦截器，添加 Access Token
-    this.instance.interceptors.request.use(
-      (config) => {
-        const token = localStorage.getItem("accessToken");
-        if (token && config.headers) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    // // 响应拦截器，处理 token 过期
-    this.instance.interceptors.response.use(
-      (response: AxiosResponse) => response,
-      async (error) => {
-        const originalRequest = error.config;
-
-        if (error.response.status === 401 && !originalRequest._retry) {
-          console.log("token过期");
-
-          originalRequest._retry = true;
-          const refresh_token = localStorage.getItem("refreshToken");
-
-          if (refresh_token) {
-            try {
-              const response = await axios.post(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/refresh-tokens`,
-                { refresh_token }
-              );
-              const {
-                access_token: accessToken,
-                refresh_token: newRefreshToken,
-              } = response.data?.data;
-
-              localStorage.setItem("accessToken", accessToken);
-              if (newRefreshToken) {
-                localStorage.setItem("refreshToken", newRefreshToken);
-              }
-              originalRequest.headers[
-                "Authorization"
-              ] = `Bearer ${accessToken}`;
-              return axios(originalRequest);
-            } catch (refreshError) {
-              console.log(refreshError);
-
-              // 刷新 token 失败，重定向到登录页面
-              if (window.location.pathname !== "/login") {
-                window.location.href = "/login";
-              }
-              return Promise.reject(refreshError);
-            }
-          } else {
-            // 没有 Refresh Token，重定向到登录页面
-            if (window.location.pathname !== "/login") {
-              window.location.href = "/login";
-            }
-
-            return Promise.reject(error.response.data);
-          }
-        }
-
-        console.log(error.response.data);
-        message.warning(error.response.data.message);
-        return Promise.reject(error.response.data);
-      }
-    );
+    // 初始化认证拦截器
+    new AuthInterceptor(this.instance);
   }
 
+  /**
+   * GET 请求
+   */
   public get<T>(
     url: string,
     config?: AxiosRequestConfig
@@ -96,6 +32,9 @@ class ApiClient {
     return this.instance.get<T>(url, config);
   }
 
+  /**
+   * POST 请求
+   */
   public post<T>(
     url: string,
     data?: any,
@@ -104,6 +43,9 @@ class ApiClient {
     return this.instance.post<ApiResponse<T>>(url, data, config);
   }
 
+  /**
+   * PUT 请求
+   */
   public put<T>(
     url: string,
     data?: any,
@@ -112,6 +54,9 @@ class ApiClient {
     return this.instance.put<ApiResponse<T>>(url, data, config);
   }
 
+  /**
+   * DELETE 请求
+   */
   public delete<T>(
     url: string,
     config?: AxiosRequestConfig
@@ -120,6 +65,6 @@ class ApiClient {
   }
 }
 
+// 导出单例实例
 const apiClient = new ApiClient();
-
 export default apiClient;

@@ -1,4 +1,5 @@
-import apiClient, { ApiResponse } from "@/lib/apiClient";
+import { ApiResponse } from "@/lib/api/types";
+import apiClient from "@/lib/apiClient";
 export type Conversation = {
   id: string;
   title: string;
@@ -14,7 +15,7 @@ export type Conversation = {
 export const getConversationList = async (
   userId: string
 ): Promise<ApiResponse<Conversation[]>> => {
-  const conversationList = await apiClient.get<Conversation[]>(
+  const conversationList = await apiClient.get<ApiResponse<Conversation[]>>(
     `/conversations/${userId}`
   );
   return conversationList.data;
@@ -22,7 +23,7 @@ export const getConversationList = async (
 
 type CreateConversationDto = {
   title: string;
-  isPinned: boolean;
+  isPinned?: boolean;
   userId: string;
 };
 // 创建会话

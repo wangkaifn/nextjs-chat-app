@@ -1,5 +1,6 @@
 "use client";
-import apiClient, { ApiResponse } from "@/lib/apiClient";
+import { ApiResponse } from "@/lib/api/types";
+import apiClient from "@/lib/apiClient";
 import Cookies from "js-cookie";
 export interface User {
   id: string;
@@ -87,24 +88,24 @@ export const login = async (data: LoginDto): Promise<ApiResponse<LoginVo>> => {
  */
 // /users/currentUser
 
-export const getCurrentUser = async (): Promise<
-  ApiResponse<boolean> | boolean
-> => {
-  // if (typeof window === 'undefined') return false;
-  const userInfoStr = localStorage?.getItem("userInfo");
-  if (!userInfoStr) {
-    return false;
-  }
-  const userInfo = JSON.parse(userInfoStr);
+// export const getCurrentUser = async (): Promise<
+//   ApiResponse<boolean> | boolean
+// > => {
+//   // if (typeof window === 'undefined') return false;
+//   const userInfoStr = localStorage?.getItem("userInfo");
+//   if (!userInfoStr) {
+//     return false;
+//   }
+//   const userInfo = JSON.parse(userInfoStr);
 
-  const response = await apiClient.get<ApiResponse<boolean>>(
-    "/users/currentUser",
-    {
-      id: userInfo.id,
-    }
-  );
-  if (response.data.success) {
-    return true;
-  }
-  return false;
-};
+//   const response = await apiClient.get<ApiResponse<{ id: string }>>(
+//     "/users/currentUser",
+//     {
+//       id: userInfo.id,
+//     }
+//   );
+//   if (response.data.success) {
+//     return true;
+//   }
+//   return false;
+// };

@@ -108,7 +108,6 @@ export function RegistryForm() {
     }, 1000);
 
     const result = await getRegisterCaptcha(email);
-    console.log(result);
 
     if (result) {
       toast({

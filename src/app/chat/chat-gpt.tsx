@@ -5,9 +5,13 @@ import { useTheme } from "antd-style";
 import { useAuth } from "@/contexts/AuthProvider";
 import {
   createMessage,
+  deleteMessageByConversationId,
   getMessageListByConversationId,
   Message,
 } from "@/services/messageService";
+import { User } from "@/services/userService";
+import { useToast } from "@/hooks/use-toast";
+import { message } from "antd";
 
 export default function ChatGPT({
   conversationId,
@@ -15,7 +19,8 @@ export default function ChatGPT({
   conversationId: string;
 }) {
   const theme = useTheme();
-  const { user } = useAuth();
+  const { toasts } = useToast();
+  const { user, selectedGptModule } = useAuth();
   const [loading, setLoading] = useState(false);
   // 会话消息列表  new set 缓存
   const [conversationMessageList, setConversationMessageList] = useState<
@@ -42,7 +47,13 @@ export default function ChatGPT({
   }, [conversationId]);
 
   const chats = useMemo(() => {
-    return conversationMessageList.get(conversationId) || [];
+    return conversationMessageList.get(conversationId)?.map((item) => ({
+      id: item.id,
+      createAt: item.createdAt as unknown as number,
+      updateAt: item.updatedAt as unknown as number,
+      content: item.content,
+      role: item.role === "USER" ? "user" : "assistant",
+    }));
   }, [conversationMessageList, conversationId]);
 
   return (
@@ -57,10 +68,7 @@ export default function ChatGPT({
           height: "100%",
         }}
         loading={loading}
-        chats={chats?.map((item) => ({
-          ...item,
-          role: item.role === "USER" ? "user" : "assistant",
-        }))}
+        chats={chats}
         userMeta={{
           avatar: "https://ui.shadcn.com/avatars/shadcn.jpg",
           title: user?.nickname || user?.username,
@@ -71,12 +79,22 @@ export default function ChatGPT({
             zIndex: 10,
           },
         }}
-        request={async (messages) => {
-          const { data } = await createMessage({
-            conversationId: conversationId,
-            content: messages[messages.length - 1].content as string,
-            userId: user?.id as string,
+        onResetMessage={async () => {
+          deleteMessageByConversationId(conversationId).then((res) => {
+            if (res.success) {
+              message.success("清除成功");
+            }
           });
+        }}
+        request={async (messages) => {
+          const { data } = await createMessage(
+            {
+              conversationId: conversationId,
+              content: messages[messages.length - 1].content as string,
+              userId: user?.id as string,
+            },
+            selectedGptModule
+          );
           return new Response(data?.assistantMessage?.content);
         }}
       />
