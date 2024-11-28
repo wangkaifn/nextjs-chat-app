@@ -5,10 +5,13 @@ import { useTheme } from "antd-style";
 import { useAuth } from "@/contexts/AuthProvider";
 import {
   createMessage,
+  deleteMessageByConversationId,
   getMessageListByConversationId,
   Message,
 } from "@/services/messageService";
 import { User } from "@/services/userService";
+import { useToast } from "@/hooks/use-toast";
+import { message } from "antd";
 
 export default function ChatGPT({
   conversationId,
@@ -16,6 +19,7 @@ export default function ChatGPT({
   conversationId: string;
 }) {
   const theme = useTheme();
+  const { toasts } = useToast();
   const { user, selectedGptModule } = useAuth();
   const [loading, setLoading] = useState(false);
   // 会话消息列表  new set 缓存
@@ -74,6 +78,13 @@ export default function ChatGPT({
           style: {
             zIndex: 10,
           },
+        }}
+        onResetMessage={async () => {
+          deleteMessageByConversationId(conversationId).then((res) => {
+            if (res.success) {
+              message.success("清除成功");
+            }
+          });
         }}
         request={async (messages) => {
           const { data } = await createMessage(

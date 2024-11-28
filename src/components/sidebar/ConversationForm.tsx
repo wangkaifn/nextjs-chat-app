@@ -25,42 +25,25 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { FormType } from "./types/conversation";
 
-/**
- * 表单验证模式
- */
 const formSchema = z.object({
   title: z.string().min(1, "标题不能为空"),
 });
 
-/**
- * 会话表单组件的属性接口
- */
 interface ConversationFormProps {
-  /** 对话框是否打开 */
   open: boolean;
-  /** 设置对话框开关状态的回调函数 */
   setOpen: (open: boolean) => void;
-  /** 更新会话列表的回调函数 */
   setConversationList: React.Dispatch<React.SetStateAction<Conversation[]>>;
-  /** 当前编辑的会话详情（编辑模式时使用） */
-  currentConversationDetail?: Conversation;
-  /** 设置当前激活会话的回调函数 */
+  currentConversation?: Conversation;
   setIsActiveConversation: (id: string) => void;
-  /** 表单类型：新增或编辑 */
   formType?: FormType;
-  /** 用户ID */
   userId: string;
 }
 
-/**
- * 会话表单组件
- * 用于新增或编辑会话信息
- */
 export function ConversationForm({
   open,
   setOpen,
   setConversationList,
-  currentConversationDetail,
+  currentConversation,
   setIsActiveConversation,
   formType,
   userId,
@@ -68,29 +51,23 @@ export function ConversationForm({
   const { toast } = useToast();
   const router = useRouter();
 
-  // 初始化表单
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: currentConversationDetail?.title || "",
+      title: currentConversation?.title || "",
     },
   });
 
-  /**
-   * 表单提交处理函数
-   * 处理新增和编辑两种情况
-   */
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       if (formType === "add") {
-        // 创建新会话
         const response = await conversationService.createConversation({
           title: values.title,
           userId,
         });
 
         const newConversation = response.data;
-        setConversationList((prevList) => [...prevList, newConversation]);
+        setConversationList((prevList) => [newConversation, ...prevList]);
         setIsActiveConversation(newConversation.id);
         router.push(`/chat/${newConversation.id}`);
 
@@ -99,12 +76,11 @@ export function ConversationForm({
           description: "会话创建成功",
           duration: 3000,
         });
-      } else if (formType === "edit" && currentConversationDetail) {
-        // 更新现有会话
+      } else if (formType === "edit" && currentConversation) {
         await conversationService.updateConversation({
-          id: currentConversationDetail?.id as string,
           title: values.title,
           userId,
+          id: currentConversation.id,
         });
 
         const updatedList = await conversationService.getConversationList(

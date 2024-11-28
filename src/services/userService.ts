@@ -1,5 +1,6 @@
 "use client";
-import apiClient, { ApiResponse } from "@/lib/apiClient";
+import { ApiResponse } from "@/lib/api/types";
+import apiClient from "@/lib/apiClient";
 import Cookies from "js-cookie";
 export interface User {
   id: string;

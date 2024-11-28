@@ -3,6 +3,8 @@ import * as conversationService from "@/services/conversationService";
 import type { Conversation } from "@/services/conversationService";
 import { FormType } from "../types/conversation";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+
 /**
  * 会话管理Hook
  * 处理会话列表的状态管理和操作
@@ -19,16 +21,26 @@ export function useConversations(userId?: string, initialActiveId?: string) {
   const [currentConversation, setCurrentConversation] =
     useState<Conversation>();
 
+  const { push } = useRouter();
+
   /**
    * 获取会话列表
    */
   const fetchConversations = useCallback(async () => {
     if (!userId) return;
+    console.log("userId:", userId);
 
     setLoading(true);
     try {
       const { data } = await conversationService.getConversationList(userId);
+      console.log("data:fetchConversations", data);
       setConversations(data);
+      if (data[0]?.id) {
+        push(`/chat/${data[0].id}`);
+        setActiveConversationId(data[0].id);
+      } else {
+        push(`/chat`);
+      }
     } catch (error) {
       console.error("Failed to fetch conversations:", error);
     } finally {
@@ -66,10 +78,12 @@ export function useConversations(userId?: string, initialActiveId?: string) {
       try {
         await conversationService.deleteConversation(conversationId);
         toast({
+          variant: "destructive",
           title: "删除成功",
           description: "删除成功",
           duration: 3000,
         });
+
         fetchConversations();
       } catch (error) {
         console.error("Failed to delete conversation:", error);
@@ -97,5 +111,6 @@ export function useConversations(userId?: string, initialActiveId?: string) {
     formType,
     currentConversation,
     refreshConversations: fetchConversations,
+    setConversations,
   };
 }

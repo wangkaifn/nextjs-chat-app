@@ -1,28 +1,42 @@
-import { DropdownMenu } from "../ui/dropdown-menu";
-import { SidebarMenuButton, SidebarMenuItem, useSidebar } from "../ui/sidebar";
-import { ConversationMenu } from "./ConversationMenu";
-import { ConversationItemProps } from "./types/conversation";
+"use client";
 
-export function ConversationItem({
+import { Conversation } from "@/services/conversationService";
+import {
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarMenuAction,
+} from "@/components/ui/sidebar";
+import { ConversationMenu } from "./ConversationMenu";
+import { useRouter } from "next/navigation";
+
+interface ConversationMenuItemProps {
+  conversation: Conversation;
+  isActive: boolean;
+  onSelect: (id: string) => void;
+  onEdit: (conversation: Conversation) => void;
+  onDelete: (id: string) => void;
+}
+
+export function ConversationMenuItem({
   conversation,
   isActive,
   onSelect,
   onEdit,
   onDelete,
-}: ConversationItemProps) {
-  const { isMobile } = useSidebar();
+}: ConversationMenuItemProps) {
+  const router = useRouter();
+
+  const handleSelect = () => {
+    onSelect(conversation.id);
+    router.push(`/chat/${conversation.id}`);
+  };
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton
-        asChild
-        onClick={() => onSelect(conversation.id)}
-        isActive={isActive}
-      >
+      <SidebarMenuButton asChild onClick={handleSelect} isActive={isActive}>
         <a>{conversation.title}</a>
       </SidebarMenuButton>
       <ConversationMenu
-        isMobile={isMobile}
         onEdit={() => onEdit(conversation)}
         onDelete={() => onDelete(conversation.id)}
       />

@@ -9,18 +9,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuAction } from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
 
 interface ConversationMenuProps {
-  isMobile: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-export function ConversationMenu({
-  isMobile,
-  onEdit,
-  onDelete,
-}: ConversationMenuProps) {
+export function ConversationMenu({ onEdit, onDelete }: ConversationMenuProps) {
+  const { isMobile } = useSidebar();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
