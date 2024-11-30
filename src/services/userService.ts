@@ -1,7 +1,6 @@
 "use client";
 import { ApiResponse } from "@/lib/api/types";
 import apiClient from "@/lib/apiClient";
-import Cookies from "js-cookie";
 export interface User {
   id: string;
   email: string;
@@ -74,38 +73,5 @@ export const createUser = async (
 export const login = async (data: LoginDto): Promise<ApiResponse<LoginVo>> => {
   const response = await apiClient.post<LoginVo>("/users/login", data);
 
-  if (response.data.data && response.data.success) {
-    Cookies.set("accessToken", response.data.data.access_token, { expires: 1 });
-    Cookies.set("refreshToken", response.data.data.refresh_token, {
-      expires: 7,
-    });
-  }
   return response.data;
 };
-
-/**
- *
- */
-// /users/currentUser
-
-// export const getCurrentUser = async (): Promise<
-//   ApiResponse<boolean> | boolean
-// > => {
-//   // if (typeof window === 'undefined') return false;
-//   const userInfoStr = localStorage?.getItem("userInfo");
-//   if (!userInfoStr) {
-//     return false;
-//   }
-//   const userInfo = JSON.parse(userInfoStr);
-
-//   const response = await apiClient.get<ApiResponse<{ id: string }>>(
-//     "/users/currentUser",
-//     {
-//       id: userInfo.id,
-//     }
-//   );
-//   if (response.data.success) {
-//     return true;
-//   }
-//   return false;
-// };

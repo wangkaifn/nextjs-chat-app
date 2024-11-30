@@ -9,21 +9,21 @@ COPY package*.json ./
 
 # 设置 npm 镜像为淘宝镜像
 RUN npm config set registry https://registry.npmmirror.com
-
+RUN npm install -g pnpm
 # 安装依赖
-RUN npm install
+RUN pnpm install
 
 # 复制所有文件到容器中
 COPY . .
 
 # 构建 Next.js 应用
-RUN npm run build
+RUN pnpm run build
 
 # 声明环境变量
-ENV PORT 3001
+ENV PORT 1126
 
 # 暴露端口
-EXPOSE 3001
+EXPOSE 1126
 
 # 启动应用
 CMD ["npm", "start"]

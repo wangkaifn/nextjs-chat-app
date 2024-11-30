@@ -7,7 +7,7 @@ import {
   SidebarMenuAction,
 } from "@/components/ui/sidebar";
 import { ConversationMenu } from "./ConversationMenu";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface ConversationMenuItemProps {
   conversation: Conversation;
@@ -24,17 +24,14 @@ export function ConversationMenuItem({
   onEdit,
   onDelete,
 }: ConversationMenuItemProps) {
-  const router = useRouter();
-
   const handleSelect = () => {
     onSelect(conversation.id);
-    router.push(`/chat/${conversation.id}`);
   };
 
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild onClick={handleSelect} isActive={isActive}>
-        <a>{conversation.title}</a>
+        <Link href={`/chat/${conversation.id}`}>{conversation.title}</Link>
       </SidebarMenuButton>
       <ConversationMenu
         onEdit={() => onEdit(conversation)}
