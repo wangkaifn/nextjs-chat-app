@@ -6,7 +6,10 @@ const analyzerConfig = {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
+  experimental: {
+    optimizePackageImports: ["@ant-design/pro-chat", "axios"],
+    swcMinify: true,
+  },
 };
 
 export default withBundleAnalyzer(analyzerConfig)(nextConfig);

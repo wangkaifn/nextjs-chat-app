@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,8 +24,9 @@ import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { SlideTransition } from "@/components/transitions/SlideTransition";
+
 const formSchema = z.object({
   username: z
     .string()
@@ -54,9 +54,13 @@ const formSchema = z.object({
 export function RegistryForm() {
   const { toast } = useToast();
   const router = useRouter();
-
+  const [isVisible, setIsVisible] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,7 +73,7 @@ export function RegistryForm() {
     mode: "onChange",
   });
 
-  const email = form.watch("email"); // 监听 email 字段的变化
+  const email = form.watch("email");
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const { success } = await createUser(values);
@@ -91,7 +95,7 @@ export function RegistryForm() {
       });
       return;
     }
-    // 启动倒计时
+
     setCountdown(60);
     setIsDisabled(true);
 
@@ -118,11 +122,7 @@ export function RegistryForm() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-    >
+    <SlideTransition in={isVisible} duration={600}>
       <Card className="mx-auto min-w-96 md:min-w-[480px] backdrop-blur-lg">
         <CardHeader className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
           <CardTitle className="text-2xl">轻记AI GPT Chat</CardTitle>
@@ -224,6 +224,6 @@ export function RegistryForm() {
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </SlideTransition>
   );
 }

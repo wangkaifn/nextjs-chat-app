@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,10 +23,9 @@ import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { motion } from "framer-motion";
-import { login } from "@/services/userService";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthProvider";
+import { SlideTransition } from "@/components/transitions/SlideTransition";
 
 const formSchema = z.object({
   username: z
@@ -50,6 +49,12 @@ export function LoginForm() {
   const { toast } = useToast();
   const { login } = useAuth();
   const router = useRouter();
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -63,11 +68,7 @@ export function LoginForm() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-    >
+    <SlideTransition in={isVisible} duration={600}>
       <Card className="mx-auto min-w-96 md:min-w-[480px] backdrop-blur-lg">
         <CardHeader className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
           <CardTitle className="text-2xl">轻记AI GPT Chat</CardTitle>
@@ -123,6 +124,6 @@ export function LoginForm() {
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </SlideTransition>
   );
 }

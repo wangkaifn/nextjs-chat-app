@@ -9,8 +9,6 @@ import {
   getMessageListByConversationId,
   Message,
 } from "@/services/messageService";
-import { User } from "@/services/userService";
-import { useToast } from "@/hooks/use-toast";
 import { message } from "antd";
 
 export default function ChatGPT({
@@ -19,7 +17,6 @@ export default function ChatGPT({
   conversationId: string;
 }) {
   const theme = useTheme();
-  const { toasts } = useToast();
   const { user, selectedGptModule } = useAuth();
   const [loading, setLoading] = useState(false);
   // 会话消息列表  new set 缓存
